@@ -2,9 +2,9 @@
 FROM python:3.12-slim
 
 # Tesseract OCR 及中文字体（错题 OCR / PDF 中文导出）
-# 使用国内镜像源加速（apt: 清华 tuna https；直接写标准 sources.list 避免 deb822 格式差异）
+# 使用国内镜像源加速（apt: 阿里云 https；直接写标准 sources.list 避免 deb822 格式差异；清华源对该出口 IP 403）
 RUN . /etc/os-release \
-    && printf 'deb https://mirrors.tuna.tsinghua.edu.cn/debian %s main contrib non-free non-free-firmware\ndeb https://mirrors.tuna.tsinghua.edu.cn/debian %s-updates main contrib non-free non-free-firmware\ndeb https://mirrors.tuna.tsinghua.edu.cn/debian-security %s-security main contrib non-free non-free-firmware\n' "$VERSION_CODENAME" "$VERSION_CODENAME" "$VERSION_CODENAME" > /etc/apt/sources.list \
+    && printf 'deb https://mirrors.aliyun.com/debian %s main contrib non-free non-free-firmware\ndeb https://mirrors.aliyun.com/debian %s-updates main contrib non-free non-free-firmware\ndeb https://mirrors.aliyun.com/debian-security %s-security main contrib non-free non-free-firmware\n' "$VERSION_CODENAME" "$VERSION_CODENAME" "$VERSION_CODENAME" > /etc/apt/sources.list \
     && rm -f /etc/apt/sources.list.d/debian.sources \
     && apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
@@ -20,7 +20,7 @@ WORKDIR /app
 
 # 先装依赖（利用缓存层）
 COPY requirements.txt .
-RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r requirements.txt
+RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple -r requirements.txt
 
 # 复制项目
 COPY app ./app
