@@ -2,9 +2,10 @@
 FROM python:3.12-slim
 
 # Tesseract OCR 及中文字体（错题 OCR / PDF 中文导出）
-# 使用国内镜像源加速（apt: 清华 tuna；如需其他镜像可替换）
-RUN sed -i 's|deb.debian.org|mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources \
-    && apt-get update && apt-get install -y --no-install-recommends \
+# 使用国内镜像源加速（apt: 清华 tuna https；如需其他镜像可替换）
+RUN sed -i -E 's|https?://deb\.debian\.org|https://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list.d/debian.sources 2>/dev/null || true; \
+    sed -i -E 's|https?://deb\.debian\.org|https://mirrors.tuna.tsinghua.edu.cn|g' /etc/apt/sources.list 2>/dev/null || true; \
+    apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr \
     tesseract-ocr-chi-sim \
     fonts-noto-cjk \
