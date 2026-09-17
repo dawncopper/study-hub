@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}登录 - 学习小站{% endblock %}
+{% block content %}
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-hero">
+      <div class="auth-logo">🎒</div>
+      <h1 class="auth-title">学习小站</h1>
+      <p class="auth-subtitle">StudyHub · 每天进步一点点</p>
+    </div>
+    {% if error %}<div class="banner banner-error">{{ error }}</div>{% endif %}
+    <form class="auth-form" method="post" action="/login">
+      <label class="field">
+        <span class="field-label">家长账号</span>
+        <input class="input" type="text" name="username" placeholder="请输入用户名" required autocomplete="username">
+      </label>
+      <label class="field">
+        <span class="field-label">密码</span>
+        <input class="input" type="password" name="password" placeholder="请输入密码" required autocomplete="current-password">
+      </label>
+      <button class="btn btn-primary btn-block" type="submit">登 录</button>
+    </form>
+    <p class="auth-hint">默认账号：admin / 123456<br>首次登录后请在「设置」中修改密码</p>
+    <a class="auth-kid" href="/kid" target="_blank">🎮 直接查看孩子学习小站</a>
+  </div>
+</div>
+{% endblock %}

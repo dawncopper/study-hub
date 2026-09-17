@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}积分兑换 - 学习小站{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <h2 class="page-title">🏆 积分兑换</h2>
+</section>
+
+<section class="hero-card rewards-hero">
+  <div class="hero-text">
+    <h2 class="hero-title">星星余额</h2>
+    <p class="hero-sub">兑换游戏时间、点亮成就勋章</p>
+  </div>
+  <div class="rewards-balance">
+    <span class="balance-number">{{ balance }}</span><span class="balance-unit"> 星</span>
+  </div>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-title"><span>🌱 成长小树</span><span class="card-sub">Lv.{{ level }}</span></div>
+    <div class="tree-wrap">
+      <span class="tree-emoji" style="font-size: {{ [44, 52, 64, 76, 88][[0,1,2,3,4][level-1] if level <= 5 else 4] }}px">{{ tree_emoji }}</span>
+      <div class="progress-bar"><div class="progress-fill" style="width: {{ progress }}%"></div></div>
+      <p class="hint">每 100 星成长一级，距离 Lv.{{ level + 1 }} 还差 {{ 100 - progress }} 星</p>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-title"><span>🎮 兑换游戏时间</span></div>
+    <p class="hint">兑换比例：1 分钟 = {{ exchange_rule }} 星<br>
+    今日已用 {{ today_used }} / {{ daily_limit }} 分钟 · 本周已用 {{ week_used }} / {{ weekly_limit }} 分钟</p>
+    <form class="record-form" method="post" action="/rewards/exchange">
+      <label class="field"><span class="field-label">兑换时长（分钟）</span>
+        <input class="input" type="number" name="minutes" min="1" max="240" value="15" required>
+      </label>
+      <label class="field"><span class="field-label">备注</span>
+        <input class="input" type="text" name="note" placeholder="如：周末晚上 7 点玩">
+      </label>
+      <div class="form-actions"><button class="btn btn-primary btn-block" type="submit">兑换（消耗 {{ exchange_rule * 15 }} 星）</button></div>
+    </form>
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-title"><span>🏅 成就勋章</span><span class="card-sub">连续打卡 {{ streak }} 天</span></div>
+  <div class="badge-grid">
+    {% for b in badges %}
+    <div class="badge-item {{ 'locked' if not b.earned }}">
+      <div class="badge-emoji">{{ b.icon if b.earned else '🔒' }}</div>
+      <div class="badge-name">{{ b.name }}</div>
+      <div class="badge-state">{{ '已获得' if b.earned else '未获得' }}</div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="form-actions">
+    <form method="post" action="/rewards/refresh-badges">
+      <button class="btn btn-secondary" type="submit">刷新勋章状态</button>
+    </form>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-title"><span>🧾 兑换记录</span></div>
+  {% if orders %}
+  <ul class="flow-list">
+    {% for o in orders %}
+    <li class="flow-item">
+      <span class="flow-icon">🎮</span>
+      <span class="flow-text">{{ o.minutes }} 分钟游戏时间{% if o.note %}（{{ o.note }}）{% endif %}</span>
+      <span class="flow-time">{{ o.created_at.strftime('%m-%d %H:%M') }}</span>
+      <span class="flow-amount neg">-{{ o.points_cost }}</span>
+      <span class="status-pill status-{{ 'approved' if o.status == 'approved' else 'used' }}">{{ '待使用' if o.status == 'approved' else '已使用' }}</span>
+      {% if o.status == 'approved' %}
+      <form method="post" action="/rewards/order/{{ o.id }}/used">
+        <button class="btn btn-small" type="submit">使用完成</button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="empty"><div class="empty-icon">🎮</div><p>还没有兑换记录</p></div>
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="card-title"><span>🧾 积分规则与流水</span><a class="link" href="/settings">管理规则</a></div>
+  <ul class="rule-list">
+    {% for rule in rules %}
+    <li class="rule-item">
+      <span class="rule-name">{{ rule.name }}</span>
+      <span class="rule-value {{ 'pos' if rule.value > 0 else 'neg' }}">{{ '+' if rule.value > 0 }}{{ rule.value }} {{ rule.unit }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% if transactions %}
+  <ul class="flow-list">
+    {% for t in transactions %}
+    <li class="flow-item">
+      <span class="flow-icon">{{ '➕' if t.amount > 0 else '➖' }}</span>
+      <span class="flow-text">{{ t.reason }}</span>
+      <span class="flow-time">{{ t.created_at.strftime('%m-%d %H:%M') }}</span>
+      <span class="flow-amount {{ 'pos' if t.amount > 0 else 'neg' }}">{{ '+' if t.amount > 0 }}{{ t.amount }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="card-title"><span>⚙️ 家长手动调整</span></div>
+  <form class="record-form" method="post" action="/rewards/adjust">
+    <div class="form-row">
+      <label class="field"><span class="field-label">调整值（可正可负）</span>
+        <input class="input" type="number" name="amount" value="10" required>
+      </label>
+      <label class="field field-grow"><span class="field-label">原因</span>
+        <input class="input" type="text" name="reason" placeholder="如：额外表扬">
+      </label>
+    </div>
+    <div class="form-actions"><button class="btn btn-secondary" type="submit">确认调整</button></div>
+  </form>
+</section>
+
+{% endblock %}

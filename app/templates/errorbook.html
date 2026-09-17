@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}错题本 - 学习小站{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <h2 class="page-title">✏️ 错题本</h2>
+  <a class="btn btn-small" href="/errorbook/export?{% for k, v in filter.items() %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}">📄 导出 PDF</a>
+</section>
+
+<section class="card">
+  <div class="card-title"><span>📷 拍照录入错题</span><span class="card-sub">上传后自动识别题目与答案，+5 星</span></div>
+  {% if ocr_mode == 'openrouter' %}
+  <p class="hint">当前识别：🤖 OpenRouter AI 视觉识别（失败自动回退本地 OCR）</p>
+  {% else %}
+  <p class="hint">当前识别：本地 Tesseract OCR（可在「设置 → 错题 AI 识别」中启用 OpenRouter）</p>
+  {% endif %}
+  <form class="record-form" method="post" action="/errorbook/upload" enctype="multipart/form-data">
+    <div class="form-row">
+      <label class="field"><span class="field-label">科目</span>
+        <select class="input" name="subject_id" required>
+          {% for s in subjects %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="field"><span class="field-label">知识点</span>
+        <input class="input" type="text" name="knowledge_point" placeholder="如：一元一次方程">
+      </label>
+      <label class="field"><span class="field-label">标签（逗号分隔）</span>
+        <input class="input" type="text" name="tags" placeholder="如：计算,易错">
+      </label>
+      <label class="field"><span class="field-label">错因</span>
+        <input class="input" type="text" name="error_reason" placeholder="如：粗心算错">
+      </label>
+    </div>
+    <label class="field"><span class="field-label">错题照片</span>
+      <input class="input" type="file" name="file" accept="image/*" required>
+    </label>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">上传并识别</button></div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-title"><span>🔍 筛选</span></div>
+  <form class="filter-form" method="get" action="/errorbook">
+    <select class="input" name="subject_id">
+      <option value="">全部科目</option>
+      {% for s in subjects %}<option value="{{ s.id }}" {{ 'selected' if filter.subject_id == s.id|string }}>{{ s.name }}</option>{% endfor %}
+    </select>
+    <input class="input" type="text" name="knowledge" placeholder="知识点" value="{{ filter.knowledge }}">
+    <input class="input" type="text" name="tag" placeholder="标签" value="{{ filter.tag }}">
+    <select class="input" name="status">
+      <option value="">全部状态</option>
+      <option value="pending" {{ 'selected' if filter.status == 'pending' }}>待订正</option>
+      <option value="reviewed" {{ 'selected' if filter.status == 'reviewed' }}>已订正</option>
+      <option value="mastered" {{ 'selected' if filter.status == 'mastered' }}>已掌握</option>
+    </select>
+    <button class="btn btn-secondary" type="submit">筛选</button>
+    {% if has_filter %}<a class="btn btn-small" href="/errorbook">清除</a>{% endif %}
+  </form>
+</section>
+
+{% if items %}
+<section class="card">
+  <div class="card-title"><span>错题列表（{{ items|length }}）</span></div>
+  <ul class="error-list">
+    {% for item in items %}
+    <li class="error-item" data-status="{{ item.status }}">
+      <div class="error-head">
+        <span class="subject-dot" style="background:{{ item.subject.color if item.subject }}"></span>
+        <span class="error-knowledge">{{ item.knowledge_point or '未标知识点' }}</span>
+        {% if item.tags %}<span class="tag">{{ item.tags }}</span>{% endif %}
+        {% if item.ocr_source %}<span class="tag">{{ '🤖 AI' if item.ocr_source == 'openrouter' else 'OCR' if item.ocr_source == 'tesseract' else '手动' }}</span>{% endif %}
+        <span class="status-pill status-{{ item.status }}">{{ {'pending':'待订正','reviewed':'已订正','mastered':'已掌握'}.get(item.status, item.status) }}</span>
+        <span class="error-time">{{ item.created_at.strftime('%m-%d %H:%M') }}</span>
+      </div>
+      <div class="error-question">{{ item.question_text or '（无题目文字）' }}</div>
+      {% if item.image_path %}
+      <div class="error-image">
+        <img src="/errorbook/image/{{ item.image_path }}" alt="错题原图" loading="lazy">
+      </div>
+      {% endif %}
+      <details class="inline-details">
+        <summary class="btn btn-small">✏️ 编辑 / 订正</summary>
+        <form class="record-form" method="post" action="/errorbook/update/{{ item.id }}">
+          <label class="field"><span class="field-label">状态</span>
+            <select class="input" name="status">
+              <option value="pending" {{ 'selected' if item.status == 'pending' }}>待订正</option>
+              <option value="reviewed" {{ 'selected' if item.status == 'reviewed' }}>已订正</option>
+              <option value="mastered" {{ 'selected' if item.status == 'mastered' }}>已掌握（+15 星）</option>
+            </select>
+          </label>
+          <label class="field"><span class="field-label">知识点</span>
+            <input class="input" type="text" name="knowledge_point" value="{{ item.knowledge_point }}">
+          </label>
+          <label class="field"><span class="field-label">标签</span>
+            <input class="input" type="text" name="tags" value="{{ item.tags }}">
+          </label>
+          <label class="field"><span class="field-label">题目</span>
+            <textarea class="input textarea" name="question_text" rows="3">{{ item.question_text }}</textarea>
+          </label>
+          <label class="field"><span class="field-label">正确答案</span>
+            <textarea class="input textarea" name="answer_text" rows="2">{{ item.answer_text }}</textarea>
+          </label>
+          <label class="field"><span class="field-label">错因</span>
+            <input class="input" type="text" name="error_reason" value="{{ item.error_reason }}">
+          </label>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">保存</button>
+            <button class="btn btn-danger" type="submit" formaction="/errorbook/delete/{{ item.id }}"
+              data-confirm="确定删除这条错题吗？将同时删除原图">删除</button>
+          </div>
+        </form>
+      </details>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% else %}
+<div class="empty empty-card"><div class="empty-icon">📭</div><p>当前筛选下没有错题记录</p></div>
+{% endif %}
+
+{% endblock %}

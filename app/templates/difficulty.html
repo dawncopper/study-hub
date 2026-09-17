@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}难点疑点 - 学习小站{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <h2 class="page-title">💡 难点疑点</h2>
+  <a class="btn btn-small" href="/difficulty">全部</a>
+  <a class="btn btn-small {{ 'active-filter' if filter_status == 'open' }}" href="/difficulty?status=open">未解决</a>
+  <a class="btn btn-small {{ 'active-filter' if filter_status == 'solved' }}" href="/difficulty?status=solved">已解决</a>
+</section>
+
+<section class="card">
+  <div class="card-title"><span>➕ 记录新难点</span></div>
+  <form class="record-form" method="post" action="/difficulty/add">
+    <div class="form-row">
+      <label class="field"><span class="field-label">科目</span>
+        <select class="input" name="subject_id" required>
+          {% for s in subjects %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="field field-grow"><span class="field-label">标题（简短描述难点）</span>
+        <input class="input" type="text" name="title" placeholder="如：一元一次方程应用题" required>
+      </label>
+    </div>
+    <label class="field"><span class="field-label">详细描述</span>
+      <textarea class="input textarea" name="content" rows="3" placeholder="哪里没听懂？卡在哪一步？"></textarea>
+    </label>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">记录难点</button></div>
+  </form>
+</section>
+
+{% if items %}
+<section class="card">
+  <div class="card-title"><span>{{ '📌 未解决' if filter_status == 'open' or not filter_status else '✅ 已解决' }}（{{ items|length }}）</span></div>
+  <ul class="difficulty-list">
+    {% for item in items %}
+    <li class="difficulty-item {{ 'is-solved' if item.status == 'solved' }}">
+      <div class="difficulty-head">
+        <span class="subject-dot" style="background:{{ item.subject.color if item.subject }}"></span>
+        <span class="difficulty-title">{{ item.title }}</span>
+        <span class="status-pill status-{{ item.status }}">{{ '已解决' if item.status == 'solved' else '未解决' }}</span>
+      </div>
+      {% if item.content %}<div class="difficulty-content">{{ item.content }}</div>{% endif %}
+      {% if item.solution %}<div class="difficulty-solution">💡 解答：{{ item.solution }}</div>{% endif %}
+      <div class="difficulty-meta">
+        <span>{{ item.created_at.strftime('%m-%d %H:%M') }}</span>
+        {% if item.solved_at %}<span>解决于 {{ item.solved_at.strftime('%m-%d %H:%M') }}</span>{% endif %}
+      </div>
+      <div class="difficulty-actions">
+        {% if item.status == 'open' %}
+        <details class="inline-details">
+          <summary class="btn btn-small btn-primary">✓ 标记已解决</summary>
+          <form class="record-form" method="post" action="/difficulty/solve/{{ item.id }}">
+            <label class="field"><span class="field-label">解答过程</span>
+              <textarea class="input textarea" name="solution" rows="2" placeholder="记录解决思路，+15 星"></textarea>
+            </label>
+            <button class="btn btn-small btn-primary" type="submit">确认解决</button>
+          </form>
+        </details>
+        {% else %}
+        <form method="post" action="/difficulty/reopen/{{ item.id }}">
+          <button class="btn btn-small" type="submit">↩ 重新打开</button>
+        </form>
+        {% endif %}
+        <form method="post" action="/difficulty/delete/{{ item.id }}">
+          <button class="btn btn-small btn-danger" type="submit" data-confirm="确定删除这条难点记录吗？">删除</button>
+        </form>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% else %}
+<div class="empty empty-card"><div class="empty-icon">🎉</div><p>当前筛选下没有难点记录</p></div>
+{% endif %}
+
+{% endblock %}

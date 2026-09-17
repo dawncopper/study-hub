@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}首页 - 学习小站{% endblock %}
+{% block content %}
+
+<section class="hero-card">
+  <div class="hero-text">
+    <h2 class="hero-title">{{ student.name }}，加油！</h2>
+    <p class="hero-sub">{{ student.grade }} · 今天也要元气满满完成学习任务哦</p>
+  </div>
+  <div class="hero-emoji">{{ student.avatar if student.avatar else '🎒' }}</div>
+</section>
+
+<section class="stat-row">
+  <div class="stat-card stat-accent">
+    <span class="stat-icon">⭐</span>
+    <span class="stat-value">{{ balance }}</span>
+    <span class="stat-label">星星余额</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">📅</span>
+    <span class="stat-value">{{ done_count }}</span>
+    <span class="stat-label">今日完成</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">🎮</span>
+    <span class="stat-value">{{ pending_game }}</span>
+    <span class="stat-label">待用游戏(分)</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">💡</span>
+    <span class="stat-value">{{ open_difficulties|length }}</span>
+    <span class="stat-label">进行中难点</span>
+  </div>
+</section>
+
+{% if undone %}
+<div class="card">
+  <div class="card-title">
+    <span>📣 今日未完成</span>
+    <span class="badge badge-warn">{{ undone|length }}</span>
+  </div>
+  <div class="todo-list">
+    {% for r in undone %}
+    <div class="todo-item">
+      <span class="todo-icon">{{ {'homework':'📝','preview':'📖','extra':'✏️'}.get(r.category, '📌') }}</span>
+      <span class="todo-text">{{ {'homework':'校内作业','preview':'预习','extra':'课外练习'}.get(r.category, r.category) }} · {{ r.subject.name if r.subject }}</span>
+      <a class="btn btn-small btn-primary" href="/daily">去打卡</a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<section class="card">
+  <div class="card-title">
+    <span>✅ 今日打卡</span>
+    <span class="card-sub">{{ today.strftime('%m月%d日') }} {{ '星期' + '一二三四五六日'[today.weekday()] }}</span>
+  </div>
+  <div class="checkin-matrix">
+    <div class="matrix-head">
+      <div class="matrix-corner">科目</div>
+      {% for c in categories %}<div class="matrix-col-head">{{ c.icon }} {{ c.label }}</div>{% endfor %}
+    </div>
+    {% for row in matrix %}
+    <div class="matrix-row">
+      <div class="matrix-subject">
+        <span class="subject-dot" style="background:{{ row.subject.color }}"></span>{{ row.subject.name }}
+      </div>
+      {% for c in categories %}
+      <div class="matrix-cell">
+        {% set rec = row.cells[c.key] %}
+        <form class="cell-form" method="post" action="/daily/add">
+          <input type="hidden" name="d" value="{{ today.isoformat() }}">
+          <input type="hidden" name="subject_id" value="{{ row.subject.id }}">
+          <input type="hidden" name="category" value="{{ c.key }}">
+          <select class="select-mini status-select" name="status" data-cell-status
+            data-cat="{{ c.key }}" data-quality="{{ rec.quality if rec else 0 }}">
+            <option value="undone" {{ 'selected' if rec and rec.status == 'undone' else ('selected' if not rec) }}>未完成</option>
+            <option value="partial" {{ 'selected' if rec and rec.status == 'partial' }}>部分</option>
+            <option value="done" {{ 'selected' if rec and rec.status == 'done' }}>完成 ✓</option>
+          </select>
+          {% if c.key == 'homework' %}
+          <select class="select-mini quality-select" name="quality" data-quality>
+            {% for q in range(0, 6) %}
+            <option value="{{ q }}" {{ 'selected' if rec and rec.quality == q }}>{{ '★' * q if q else '·' }}</option>
+            {% endfor %}
+          </select>
+          {% endif %}
+          <input class="input-mini" type="text" name="content" placeholder="内容"
+            value="{{ rec.content if rec else '' }}">
+        </form>
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+  <p class="hint">在格子中直接选择状态即自动保存打卡并结算星星；「完成」需在打卡页选择质量星级获得额外奖励。</p>
+</section>
+
+<div class="grid-2">
+  <section class="card">
+    <div class="card-title"><span>💡 进行中难点</span><a class="link" href="/difficulty">全部</a></div>
+    {% if open_difficulties %}
+    <ul class="plain-list">
+      {% for d in open_difficulties %}
+      <li class="plain-item">
+        <span class="subject-dot" style="background:{{ d.subject.color if d.subject }}"></span>
+        <span class="plain-text">{{ d.title }}</span>
+        <a class="link" href="/difficulty">解决</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty"><div class="empty-icon">🎉</div><p>没有进行中的难点，太棒了！</p></div>
+    {% endif %}
+  </section>
+
+  <section class="card">
+    <div class="card-title"><span>✏️ 待订正错题</span><a class="link" href="/errorbook">全部</a></div>
+    {% if pending_errors %}
+    <ul class="plain-list">
+      {% for e in pending_errors %}
+      <li class="plain-item">
+        <span class="subject-dot" style="background:{{ e.subject.color if e.subject }}"></span>
+        <span class="plain-text">{{ e.knowledge_point or e.question_text[:20] or '（无标题）' }}</span>
+        <a class="link" href="/errorbook">去订正</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="empty"><div class="empty-icon">✨</div><p>暂无待订正错题</p></div>
+    {% endif %}
+  </section>
+</div>
+
+<section class="card">
+  <div class="card-title"><span>🧾 最近星星流水</span><a class="link" href="/rewards">积分中心</a></div>
+  {% if transactions %}
+  <ul class="flow-list">
+    {% for t in transactions %}
+    <li class="flow-item">
+      <span class="flow-icon">{{ '➕' if t.amount > 0 else '➖' }}</span>
+      <span class="flow-text">{{ t.reason }}</span>
+      <span class="flow-time">{{ t.created_at.strftime('%m-%d %H:%M') }}</span>
+      <span class="flow-amount {{ 'pos' if t.amount > 0 else 'neg' }}">{{ '+' if t.amount > 0 }}{{ t.amount }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <div class="empty"><div class="empty-icon">🌱</div><p>还没有积分记录，从今日打卡开始吧</p></div>
+  {% endif %}
+</section>
+
+{% endblock %}

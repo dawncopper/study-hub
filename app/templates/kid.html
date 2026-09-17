@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}{{ student.name }}的学习小站{% endblock %}
+{% block content %}
+
+<section class="kid-hero">
+  <div class="kid-avatar">{{ student.avatar if student.avatar else '🎒' }}</div>
+  <h1 class="kid-name">{{ student.name }} 的学习小站</h1>
+  <p class="kid-notice">{{ settings_notice or '今天也要加油哦！' }}</p>
+</section>
+
+<section class="kid-panel">
+  <div class="kid-balance">
+    <span class="kid-balance-label">我的星星</span>
+    <span class="kid-balance-value">{{ balance }}</span>
+  </div>
+  <div class="kid-level">
+    <div class="kid-tree">{{ tree_emoji }}</div>
+    <div class="progress-bar"><div class="progress-fill" style="width: {{ progress }}%"></div></div>
+    <span class="kid-level-label">Lv.{{ level }} · 成长小树</span>
+  </div>
+</section>
+
+<section class="kid-panel">
+  <div class="card-title"><span>✅ 今日完成</span></div>
+  <div class="kid-done">
+    <span class="kid-done-value">{{ done_count }}</span>
+    <span class="kid-done-total">/ {{ total_count }}</span>
+  </div>
+  {% if done_count >= total_count and total_count > 0 %}
+  <p class="kid-congrats">太棒了！今天的任务全部完成啦 🎉</p>
+  {% else %}
+  <p class="kid-encourage">继续加油，完成任务可以获得星星哦！</p>
+  {% endif %}
+</section>
+
+<section class="kid-panel">
+  <div class="card-title"><span>🏅 我的勋章</span></div>
+  <div class="badge-grid">
+    {% for b in badges %}
+    <div class="badge-item {{ 'locked' if not b.earned }}">
+      <div class="badge-emoji">{{ b.icon if b.earned else '🔒' }}</div>
+      <div class="badge-name">{{ b.name }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{% if recent %}
+<section class="kid-panel">
+  <div class="card-title"><span>✨ 最近获得的星星</span></div>
+  <ul class="kid-flow">
+    {% for t in recent %}
+    <li class="kid-flow-item">
+      <span class="flow-icon">⭐</span>
+      <span class="flow-text">{{ t.reason }}</span>
+      <span class="flow-amount pos">+{{ t.amount }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% endblock %}

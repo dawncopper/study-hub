@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% block title %}设置 - 学习小站{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <h2 class="page-title">⚙️ 设置</h2>
+</section>
+
+<section class="card">
+  <div class="card-title"><span>👤 学生信息</span></div>
+  <form class="record-form" method="post" action="/settings/student">
+    <div class="form-row">
+      <label class="field"><span class="field-label">孩子昵称</span>
+        <input class="input" type="text" name="student_name" value="{{ settings.get('student_name', '') }}" required>
+      </label>
+      <label class="field"><span class="field-label">年级</span>
+        <input class="input" type="text" name="student_grade" value="{{ settings.get('student_grade', '') }}">
+      </label>
+      <label class="field"><span class="field-label">性别</span>
+        <select class="input" name="student_gender">
+          <option value="男" {{ 'selected' if settings.get('student_gender') == '男' }}>男</option>
+          <option value="女" {{ 'selected' if settings.get('student_gender') == '女' }}>女</option>
+        </select>
+      </label>
+    </div>
+    <label class="field"><span class="field-label">小站公告（显示在儿童端）</span>
+      <input class="input" type="text" name="school_notice" value="{{ settings.get('school_notice', '') }}" placeholder="如：今天也要加油哦">
+    </label>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">保存学生信息</button></div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-title"><span>📚 科目管理</span></div>
+  <form class="record-form" method="post" action="/settings/subject">
+    <div class="form-row">
+      <label class="field"><span class="field-label">科目名</span>
+        <input class="input" type="text" name="name" placeholder="如：物理" required>
+      </label>
+      <label class="field"><span class="field-label">颜色</span>
+        <input class="input" type="color" name="color" value="#007AFF" style="height:44px;padding:4px">
+      </label>
+    </div>
+    <div class="form-actions"><button class="btn btn-secondary" type="submit">添加科目</button></div>
+  </form>
+  <ul class="plain-list">
+    {% for s in subjects %}
+    <li class="plain-item">
+      <span class="subject-dot" style="background:{{ s.color }}"></span>
+      <span class="plain-text">{{ s.name }}</span>
+      <form method="post" action="/settings/subject/{{ s.id }}/delete">
+        <button class="btn btn-small btn-danger" type="submit" data-confirm="确定删除科目「{{ s.name }}」吗？">删除</button>
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="card">
+  <div class="card-title"><span>⭐ 积分规则</span></div>
+  <form class="record-form" method="get" action="/settings#rules">
+    <ul class="rule-list">
+      {% for rule in rules %}
+      <li class="rule-item">
+        <span class="rule-name">{{ rule.name }}</span>
+        <span class="rule-desc">{{ rule.description }}</span>
+        <input class="input input-number" type="number" name="value_{{ rule.key }}" value="{{ rule.value }}" data-rule-key="{{ rule.key }}">
+        <span class="rule-unit">{{ rule.unit }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+    <div class="form-actions"><button class="btn btn-primary" type="submit">保存规则</button></div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-title"><span>🔔 提醒与通知</span></div>
+  <form class="record-form" method="post" action="/settings/notify">
+    <div class="form-row">
+      <label class="field"><span class="field-label">每日提醒时间</span>
+        <input class="input" type="time" name="reminder_time" value="{{ settings.get('reminder_time', '19:00') }}">
+      </label>
+      <label class="field"><span class="field-label">启用提醒</span>
+        <select class="input" name="reminder_enabled">
+          <option value="1" {{ 'selected' if settings.get('reminder_enabled') == '1' }}>启用</option>
+          <option value="0" {{ 'selected' if settings.get('reminder_enabled') != '1' }}>停用</option>
+        </select>
+      </label>
+    </div>
+    <div class="notify-group">
+      <p class="hint">支持以下推送渠道（填写后保存即生效，可多选）：</p>
+      <label class="field"><span class="field-label">企业微信群机器人 Webhook</span>
+        <input class="input" type="url" name="notify_wecom_webhook" value="{{ settings.get('notify_wecom_webhook', '') }}" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...">
+      </label>
+      <label class="field"><span class="field-label">微信群机器人 Webhook</span>
+        <input class="input" type="url" name="notify_wechat_webhook" value="{{ settings.get('notify_wechat_webhook', '') }}" placeholder="https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...">
+      </label>
+      <div class="form-row">
+        <label class="field"><span class="field-label">SMTP 服务器</span>
+          <input class="input" type="text" name="notify_email_smtp" value="{{ settings.get('notify_email_smtp', '') }}" placeholder="如：smtp.qq.com">
+        </label>
+        <label class="field"><span class="field-label">端口</span>
+          <input class="input" type="number" name="notify_email_port" value="{{ settings.get('notify_email_port', '465') }}">
+        </label>
+      </div>
+      <div class="form-row">
+        <label class="field"><span class="field-label">邮箱账号</span>
+          <input class="input" type="text" name="notify_email_user" value="{{ settings.get('notify_email_user', '') }}">
+        </label>
+        <label class="field"><span class="field-label">邮箱授权码</span>
+          <input class="input" type="password" name="notify_email_pass" value="{{ settings.get('notify_email_pass', '') }}">
+        </label>
+        <label class="field"><span class="field-label">收件人</span>
+          <input class="input" type="text" name="notify_email_to" value="{{ settings.get('notify_email_to', '') }}">
+        </label>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">保存通知设置</button>
+      <button class="btn btn-secondary" type="submit" formaction="/settings/test-notify">发送测试推送</button>
+    </div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-title"><span>🤖 错题 AI 识别（OpenRouter）</span></div>
+  <p class="hint">使用 OpenRouter 免费视觉模型 <code>inclusionai/ling-3.0-flash-vl:free</code> 识别错题照片。启用后上传错题将优先调用 AI 识别（超时 30 秒），失败或未配置时自动回退本地 Tesseract OCR。</p>
+  <form class="record-form" method="post" action="/settings/openrouter">
+    <div class="form-row">
+      <label class="field"><span class="field-label">启用 AI 识别</span>
+        <select class="input" name="openrouter_enabled">
+          <option value="1" {{ 'selected' if settings.get('openrouter_enabled') == '1' }}>启用（优先 AI，失败回退 OCR）</option>
+          <option value="0" {{ 'selected' if settings.get('openrouter_enabled') != '1' }}>停用（仅本地 OCR）</option>
+        </select>
+      </label>
+      <label class="field field-grow"><span class="field-label">OpenRouter API Key</span>
+        <input class="input" type="password" name="openrouter_api_key" placeholder="sk-or-v1-...（已配置则留空保持不变）" autocomplete="off">
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">保存配置</button>
+      <button class="btn btn-secondary" type="submit" formaction="/settings/openrouter-test">发送测试识别请求</button>
+    </div>
+  </form>
+  {% if settings.get('openrouter_api_key') %}
+  <p class="hint" style="margin-top:12px">当前状态：已配置 API Key{{ '，AI 识别已启用' if settings.get('openrouter_enabled') == '1' else '，但尚未启用（可先启用并保存）' }}。</p>
+  {% else %}
+  <p class="hint" style="margin-top:12px">当前状态：尚未配置 API Key，错题识别将使用本地 Tesseract OCR。</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="card-title"><span>👥 家长账号（多方参与）</span></div>
+  <form class="record-form" method="post" action="/settings/parent">
+    <div class="form-row">
+      <label class="field"><span class="field-label">用户名</span>
+        <input class="input" type="text" name="username" placeholder="如：mama" required>
+      </label>
+      <label class="field"><span class="field-label">昵称</span>
+        <input class="input" type="text" name="nickname" placeholder="如：妈妈">
+      </label>
+      <label class="field"><span class="field-label">初始密码（至少 6 位）</span>
+        <input class="input" type="password" name="password" required>
+      </label>
+      <label class="field"><span class="field-label">角色</span>
+        <select class="input" name="role">
+          <option value="member">成员</option>
+          <option value="admin">管理员</option>
+        </select>
+      </label>
+    </div>
+    <div class="form-actions"><button class="btn btn-secondary" type="submit">添加家长账号</button></div>
+  </form>
+  <ul class="plain-list">
+    {% for p in parents %}
+    <li class="plain-item">
+      <span class="plain-text">@{{ p.username }}（{{ p.nickname or p.role }}）</span>
+      <span class="status-pill">{{ '管理员' if p.role == 'admin' else '成员' }}</span>
+      {% if p.id != parent.id %}
+      <form method="post" action="/settings/parent/{{ p.id }}/password" class="inline-form">
+        <input class="input input-mini" type="password" name="password" placeholder="新密码" required>
+        <button class="btn btn-small" type="submit">重置密码</button>
+      </form>
+      <form method="post" action="/settings/parent/{{ p.id }}/delete">
+        <button class="btn btn-small btn-danger" type="submit" data-confirm="确定删除账号 @{{ p.username }} 吗？">删除</button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+
+<section class="card">
+  <div class="card-title"><span>🔐 安全</span></div>
+  <p class="hint">当前登录：@{{ parent.username }}（{{ parent.nickname or parent.role }}）</p>
+  <form class="inline-form" method="post" action="/settings/parent/{{ parent.id }}/password">
+    <input class="input" type="password" name="password" placeholder="输入新密码（至少 6 位）" required>
+    <button class="btn btn-primary" type="submit">修改我的密码</button>
+  </form>
+  <form method="post" action="/logout" class="logout-form">
+    <button class="btn btn-secondary" type="submit">退出登录</button>
+  </form>
+</section>
+
+{% endblock %}
+{% block scripts %}
+<script>
+// 积分规则批量保存：将各 input[data-rule-key] 值提交到 /settings/config
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('form[action="/settings#rules"]').forEach(function (form) {
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var inputs = form.querySelectorAll('input[data-rule-key]');
+      var results = [];
+      inputs.forEach(function (input) {
+        var key = input.getAttribute('data-rule-key');
+        results.push(fetch('/settings/config', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+          body: 'key=' + encodeURIComponent(key) + '&value=' + encodeURIComponent(input.value)
+        }));
+      });
+      Promise.all(results).then(function () {
+        window.location.href = '/settings?msg=积分规则已保存';
+      });
+    });
+  });
+});
+</script>
+{% endblock %}

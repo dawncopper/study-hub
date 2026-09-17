@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>{% block title %}学习小站 StudyHub{% endblock %}</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎒</text></svg>">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+{% if not hide_nav %}
+<header class="topbar">
+  <a class="topbar-brand" href="/dashboard">
+    <span class="brand-emoji">{{ student.avatar if student.avatar else '🎒' }}</span>
+    <span class="brand-name">学习小站</span>
+  </a>
+  <div class="topbar-meta">
+    <span class="meta-student">{{ student.name }} · {{ student.grade }}</span>
+    <span class="meta-date" id="todayLabel"></span>
+  </div>
+  <div class="topbar-actions">
+    <button class="icon-btn" id="themeToggle" type="button" aria-label="切换主题">🌙</button>
+    <a class="icon-btn" href="/settings" aria-label="设置">⚙️</a>
+    <a class="icon-btn" href="/kid" target="_blank" aria-label="儿童端">🎮</a>
+  </div>
+</header>
+
+<nav class="tabbar" aria-label="主导航">
+  <a class="tab-item {{ 'active' if active_nav == 'dashboard' }}" href="/dashboard">
+    <span class="tab-icon">🏠</span><span class="tab-label">首页</span>
+  </a>
+  <a class="tab-item {{ 'active' if active_nav == 'daily' }}" href="/daily">
+    <span class="tab-icon">📅</span><span class="tab-label">打卡</span>
+  </a>
+  <a class="tab-item {{ 'active' if active_nav == 'difficulty' }}" href="/difficulty">
+    <span class="tab-icon">💡</span><span class="tab-label">难点</span>
+  </a>
+  <a class="tab-item {{ 'active' if active_nav == 'errorbook' }}" href="/errorbook">
+    <span class="tab-icon">✏️</span><span class="tab-label">错题</span>
+  </a>
+  <a class="tab-item {{ 'active' if active_nav == 'rewards' }}" href="/rewards">
+    <span class="tab-icon">🏆</span><span class="tab-label">积分</span>
+  </a>
+</nav>
+{% endif %}
+
+<main class="page {% if hide_nav %}page-plain{% endif %}">
+  {% if msg %}<div class="banner banner-msg">{{ msg }}</div>{% endif %}
+  {% if error %}<div class="banner banner-error">{{ error }}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+
+{% if not hide_nav %}
+<div class="tabbar-spacer"></div>
+{% endif %}
+<script src="/static/js/app.js"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

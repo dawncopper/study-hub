@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}每日打卡 - 学习小站{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <h2 class="page-title">📅 每日打卡</h2>
+  <div class="day-nav">
+    <a class="btn btn-small" href="/daily?d={{ prev_day.isoformat() }}">← 前一天</a>
+    <span class="day-current">{{ current.strftime('%m月%d日') }} {{ '星期' + '一二三四五六日'[current.weekday()] }}</span>
+    <a class="btn btn-small" href="/daily?d={{ next_day.isoformat() }}">后一天 →</a>
+  </div>
+  <a class="btn btn-small" href="/daily">回到今天</a>
+</section>
+
+{% for cat_key, cat in groups.items() %}
+<section class="card">
+  <div class="card-title">
+    <span>{{ {'homework':'📝','preview':'📖','extra':'✏️'}.get(cat_key, '📌') }} {{ cat.label }}</span>
+    <span class="badge badge-count">{{ cat.records|length }}</span>
+  </div>
+
+  <div class="record-list">
+    {% for r in cat.records %}
+    <div class="record-item" data-status="{{ r.status }}">
+      <span class="subject-dot" style="background:{{ r.subject.color if r.subject }}"></span>
+      <div class="record-main">
+        <div class="record-head">
+          <span class="record-subject">{{ r.subject.name if r.subject }}</span>
+          <span class="status-pill status-{{ r.status }}">{{ {'done':'已完成','partial':'部分完成','undone':'未完成'}.get(r.status, r.status) }}</span>
+          {% if r.quality %}<span class="quality-stars">{% for _ in range(r.quality) %}★{% endfor %}</span>{% endif %}
+          <span class="record-points {{ 'pos' if r.points_granted > 0 else 'neg' }}">
+            {{ '+' if r.points_granted > 0 }}{{ r.points_granted }} 星
+          </span>
+        </div>
+        {% if r.content %}<div class="record-content">{{ r.content }}</div>{% endif %}
+      </div>
+      <details class="record-edit">
+        <summary class="btn btn-small">编辑</summary>
+        <form class="record-form" method="post" action="/daily/add">
+          <input type="hidden" name="d" value="{{ current.isoformat() }}">
+          <input type="hidden" name="subject_id" value="{{ r.subject_id }}">
+          <input type="hidden" name="category" value="{{ r.category }}">
+          <label class="field"><span class="field-label">状态</span>
+            <select class="input" name="status">
+              <option value="done" {{ 'selected' if r.status == 'done' }}>已完成</option>
+              <option value="partial" {{ 'selected' if r.status == 'partial' }}>部分完成</option>
+              <option value="undone" {{ 'selected' if r.status == 'undone' }}>未完成</option>
+            </select>
+          </label>
+          {% if cat_key == 'homework' %}
+          <label class="field"><span class="field-label">质量星级（5 星有额外奖励）</span>
+            <select class="input" name="quality">
+              {% for q in range(0, 6) %}
+              <option value="{{ q }}" {{ 'selected' if r.quality == q }}>{{ '★' * q if q else '未评星' }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          {% else %}
+          <input type="hidden" name="quality" value="0">
+          {% endif %}
+          <label class="field"><span class="field-label">内容/备注</span>
+            <input class="input" type="text" name="content" value="{{ r.content }}" placeholder="完成内容，如：第 3 单元练习">
+          </label>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">保存</button>
+            <button class="btn btn-danger" type="submit" formaction="/daily/delete/{{ r.id }}"
+              data-confirm="确定删除这条打卡记录吗？">删除</button>
+          </div>
+        </form>
+      </details>
+    </div>
+    {% else %}
+    <div class="empty"><div class="empty-icon">🌱</div><p>这一天还没有「{{ cat.label }}」记录，从下面添加吧</p></div>
+    {% endfor %}
+  </div>
+
+  <details class="add-block">
+    <summary class="btn btn-block btn-secondary">＋ 添加{{ cat.label }}</summary>
+    <form class="record-form" method="post" action="/daily/add">
+      <input type="hidden" name="d" value="{{ current.isoformat() }}">
+      <input type="hidden" name="category" value="{{ cat_key }}">
+      <div class="form-row">
+        <label class="field"><span class="field-label">科目</span>
+          <select class="input" name="subject_id" required>
+            {% for s in subjects %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="field"><span class="field-label">状态</span>
+          <select class="input" name="status">
+            <option value="done">已完成</option>
+            <option value="partial">部分完成</option>
+            <option value="undone">未完成</option>
+          </select>
+        </label>
+        {% if cat_key == 'homework' %}
+        <label class="field"><span class="field-label">质量星级</span>
+          <select class="input" name="quality">
+            {% for q in range(0, 6) %}
+            <option value="{{ q }}">{{ '★' * q if q else '未评星' }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        {% else %}
+        <input type="hidden" name="quality" value="0">
+        {% endif %}
+        <label class="field field-grow"><span class="field-label">内容/备注</span>
+          <input class="input" type="text" name="content" placeholder="如：完成数学练习册 P12-P14">
+        </label>
+      </div>
+      <div class="form-actions"><button class="btn btn-primary" type="submit">保存打卡</button></div>
+    </form>
+  </details>
+</section>
+{% endfor %}
+
+{% endblock %}

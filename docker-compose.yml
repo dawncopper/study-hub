@@ -1,0 +1,21 @@
+version: "3.8"
+
+services:
+  studyhub:
+    build: .
+    container_name: studyhub
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - TZ=Asia/Shanghai
+      # 可选：切换数据库（默认 SQLite 于 /app/data/studyhub.db）
+      # - STUDYHUB_DB=sqlite:////app/data/studyhub.db
+    volumes:
+      - ./data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/login', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}统计周报 - 学习小站{% endblock %}
+{% block content %}
+
+<section class="page-head">
+  <h2 class="page-title">📊 统计周报</h2>
+  <form class="segmented" method="post" action="/stats/report">
+    <input type="hidden" name="period" value="{{ 'week' if period != 'week' else 'week' }}" id="periodInput">
+    <a class="seg-item {{ 'active' if period == 'week' }}" href="/stats?period=week">本周</a>
+    <a class="seg-item {{ 'active' if period == '7d' }}" href="/stats?period=7d">近 7 天</a>
+    <a class="seg-item {{ 'active' if period == 'month' }}" href="/stats?period=month">本月</a>
+  </form>
+</section>
+
+<section class="report-hero">
+  <div class="report-period">{{ report.start.strftime('%m月%d日') }} — {{ report.end.strftime('%m月%d日') }}</div>
+  <div class="report-days">统计 {{ report.days }} 天 · {{ report.total }} 项任务</div>
+  <div class="report-ring" style="--p: {{ report.completion }}">
+    <div class="ring-inner"><span class="ring-value">{{ report.completion }}%</span><span class="ring-label">完成率</span></div>
+  </div>
+</section>
+
+<div class="stat-row">
+  <div class="stat-card">
+    <span class="stat-icon">⭐</span>
+    <span class="stat-value">{{ report.points }}</span>
+    <span class="stat-label">净得星星</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">💡</span>
+    <span class="stat-value">{{ report.solved }}</span>
+    <span class="stat-label">解决难点</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">✏️</span>
+    <span class="stat-value">{{ report.mastered }}</span>
+    <span class="stat-label">错题掌握</span>
+  </div>
+  <div class="stat-card">
+    <span class="stat-icon">✅</span>
+    <span class="stat-value">{{ report.done }} / {{ report.total }}</span>
+    <span class="stat-label">完成任务</span>
+  </div>
+</div>
+
+<section class="card">
+  <div class="card-title"><span>📚 分模块完成情况</span></div>
+  <div class="module-list">
+    {% for key in ['homework', 'preview', 'extra'] %}
+    {% set m = report.modules[key] %}
+    <div class="module-item">
+      <div class="module-head">
+        <span class="module-icon">{{ m.icon }} {{ m.label }}</span>
+        <span class="module-count">{{ m.done }} / {{ m.total }} 完成 · {{ '+' if m.points >= 0 }}{{ m.points }} 星</span>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" style="width: {{ (m.done / m.total * 100) if m.total else 0 }}%"></div>
+      </div>
+      <div class="module-sub">
+        <span>部分完成 {{ m.partial }}</span><span>未完成 {{ m.undone }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-title"><span>📈 近 30 天每日星星</span></div>
+  {% set maxv = trend | map(attribute='value') | max %}
+  {% set maxv = maxv if maxv > 0 else 1 %}
+  <div class="chart" role="img" aria-label="近30天每日星星柱状图">
+    {% for item in trend %}
+    <div class="chart-col">
+      <div class="chart-bar" style="height: {{ (item.value / maxv * 100) if item.value > 0 else 2 }}%"
+           title="{{ item.date.strftime('%m-%d') }}：{{ item.value }} 星"></div>
+      {% if loop.index % 5 == 1 or loop.last %}
+      <span class="chart-label">{{ item.date.strftime('%d') }}</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <p class="hint">绿色为获得星星，红色为扣减（兑换/未完成）</p>
+</section>
+
+{% endblock %}
